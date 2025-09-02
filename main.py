@@ -46,7 +46,7 @@ class PCCWebScraper:
     async def init_session(self):
         """初始化網路連線"""
         if not self.session:
-            connector = aiohttp.TCPConnector(limit=10)
+            connector = aiohttp.TCPConnector(limit=10, ssl=False)
             timeout = aiohttp.ClientTimeout(total=30)
             self.session = aiohttp.ClientSession(
                 connector=connector,
