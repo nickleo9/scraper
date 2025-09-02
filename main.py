@@ -136,16 +136,16 @@ class PCCWebScraper:
                     if 'pk=' in href:
                         pk_val = href.split('pk=')[-1].split('&')[0]
                         href_url = f"https://web.pcc.gov.tw/tps/QueryTender/query/searchTenderDetail?pkPmsMain={pk_val}"
-                
-                # 處理標案編號和名稱
-                raw_title = row_dict.pop("標案案號&編號名稱", "")
-                if "\n" in raw_title:
-                    lines = raw_title.split('\n', 1)
-                    編號 = lines[0].split()[0] if lines[0].split() else ""
-                    名稱 = lines[1].strip() if len(lines) > 1 else ""
+
+               # 拆解標案案號&編號名稱
+                raw = row_dict.pop("標案案號&編號名稱", "")
+                if "\n" in raw:
+                    line1, line2 = raw.split("\n", 1)
+                    編號 = line1.split()[0] if line1.split() else ""
+                    名稱 = line2.strip()
                 else:
                     編號 = ""
-                    名稱 = raw_title
+                    名稱 = raw
                 
                 # 組織最終結果
                 final_data = {
