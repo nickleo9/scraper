@@ -137,22 +137,29 @@ class PCCWebScraper:
                         pk_val = href.split('pk=')[-1].split('&')[0]
                         href_url = f"https://web.pcc.gov.tw/tps/QueryTender/query/searchTenderDetail?pkPmsMain={pk_val}"
 
-               # 拆解標案案號&編號名稱
-                raw = row_dict.pop("標案案號&編號名稱", "")
-                if "\n" in raw:
-                    line1, line2 = raw.split("\n", 1)
-                    編號 = line1.strip().split()[0] if line1.strip().split() else ""
-                    名稱 = line2.strip()
-                else:
-                    編號 = ""
-                    名稱 = raw.strip()
+                # 擷取案號與名稱
+                a_tag = row.find("a")
+                case_id, case_name = "", ""
+                
+                if a_tag:
+                    # 抓案號：在 <a> 的文字節點裡，排除 <span>
+                    for content in a_tag.contents:
+                        if content.name != "span":
+                            text = str(content).strip()
+                            if text and text != "<br/>":
+                                case_id = text
+                
+                    # 抓名稱：在 <span> 裡
+                    span_tag = a_tag.find("span")
+                    if span_tag:
+                        case_name = span_tag.get_text(strip=True)
                 
                 # 組織最終結果
                 final_data = {
                     "項次": row_dict.get("項次", ""),
                     "機關名稱": row_dict.get("機關名稱", ""),
-                    "標案編號": 編號,
-                    "標案名稱": 名稱,
+                    "標案編號": case_id,
+                    "標案名稱": case_name,
                     "傳輸次數": row_dict.get("傳輸次數", ""),
                     "招標方式": row_dict.get("招標方式", ""),
                     "採購性質": row_dict.get("採購性質", ""),
@@ -165,7 +172,7 @@ class PCCWebScraper:
                 }
                 
                 # 只保留有效資料
-                if 名稱 and row_dict.get("機關名稱"):
+                if case_name and row_dict.get("機關名稱"):
                     results.append(final_data)
                     
             except Exception as e:
