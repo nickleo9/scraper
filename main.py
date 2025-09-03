@@ -107,32 +107,61 @@ class PCCWebScraper:
                 continue
             try:
                 # 建立基本資料字典
-                row_data = [col.get_text("\n", strip=True) for col in cols[:9]]
-                keys = ["項次", "機關名稱", "標案案號&編號名稱", "傳輸次數", "招標方式", "採購性質", "公告日期", "截止投標", "預算金額"]
-                row_dict = dict(zip(keys, row_data))
+                # 這裡的 keys 順序也需要確認一下是否和實際 cols 順序一致
+                # 根據 HTML，cols[2] 是 標案案號&名稱, cols[3] 是 傳輸次數
+                # 你定義的 keys 是 ["項次", "機關名稱", "標案案號&編號名稱", "傳輸次數", ...]
+                # 這意味著 cols[2] 應該對應 "標案案號&編號名稱"
+                
+                # 直接提取文本，稍後再細分
+                row_data_raw = [col.get_text("\n", strip=True) for col in cols[:9]]
+                
+                # 重新定義 keys 以確保與實際抓取內容的對應
+                # 由於 cols[2] 同時包含案號和名稱，我們將其視為一個原始字段
+                # 其他字段按順序對應
+                keys = ["項次", "機關名稱", "標案編號_與_名稱_原始", "傳輸次數", "招標方式", "採購性質", "公告日期", "截止投標", "預算金額"]
+                row_dict = dict(zip(keys, row_data_raw))
 
-                # 取得連結
+                # 提取連結
                 href_url = ""
-                a_tag = cols[2].find("a")
-                if a_tag and a_tag.get('href') and 'pk=' in a_tag.get('href'):
-                    pk_val = a_tag['href'].split('pk=')[-1].split('&')[0]
+                # 定位到包含案號和名稱的<td>，即 cols[2]
+                target_td = cols[2] 
+                a_tag = target_td.find("a")
+                if a_tag and a_tag.get('href'): # 不再需要 'pk=' 判斷，直接取 href
+                    pk_val = a_tag['href'].split('pk=')[-1].split('&')[0] if 'pk=' in a_tag['href'] else ''
                     href_url = f"https://web.pcc.gov.tw/tps/QueryTender/query/searchTenderDetail?pkPmsMain={pk_val}"
                 
                 # 分開案號與名稱
-                raw = row_dict.pop("標案案號&編號名稱", "")
-                if "\n" in raw:
-                   line1, line2 = raw.split("\n", 1)
-                   編號 = line1.split()[0] if line1.split() else ""
-                   名稱 = line2.strip()
-                else:
-                   編號 = ""
-                   名稱 = raw
+                # 案號通常是 <td> 的直接文本節點的一部分，在 <br> 之前
+                # 案名是 <a> 標籤內的 <span> 文本
+                
+                tender_id = ""
+                tender_name = ""
+
+                # 案號：在 <br> 標籤之前的所有文本內容
+                # 使用 .contents 獲取所有子節點，然後檢查文本節點
+                for content in target_td.contents:
+                    if content.name == 'br':
+                        break # 遇到 <br> 就停止，前面的文字是案號的一部分
+                    if isinstance(content, str) and content.strip():
+                        tender_id += content.strip()
+                    elif content.name == 'span' and content.get_text(strip=True):
+                        # 處理 "(更正公告)" 這種在案號後面的 span
+                        tender_id += " " + content.get_text(strip=True)
+                
+                # 清理案號，通常在案號後面會有不必要的文字，例如 "(更正公告)"，所以只取第一個詞或更精確的模式
+                # 可以嘗試用正則表達式，但簡單處理先移除括號內容
+                tender_id = tender_id.split('(')[0].strip() # 移除像 "(更正公告)" 的部分
+
+                # 案名：從 <a> 標籤內的 <u> 標籤中的 <span> 提取
+                tender_name_span = target_td.find("a", recursive=False) # 直接查找子層的 <a>
+                if tender_name_span:
+                    tender_name = tender_name_span.get_text(strip=True)
                     
                 final_data = {
                     "項次": row_dict.get("項次", ""),
                     "機關名稱": row_dict.get("機關名稱", ""),
-                    "標案編號": 編號,
-                    "標案名稱": 名稱,
+                    "標案編號": tender_id,
+                    "標案名稱": tender_name,
                     "傳輸次數": row_dict.get("傳輸次數", ""),
                     "招標方式": row_dict.get("招標方式", ""),
                     "採購性質": row_dict.get("採購性質", ""),
