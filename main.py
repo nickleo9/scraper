@@ -290,7 +290,7 @@ async def scrape_today():
         today = datetime.date.today().strftime('%Y/%m/%d')
         
         results = await scraper.scrape_multiple_keywords(
-            keywords=["環境監測", "土壤", "地下水", "土壤地下水"],
+            keywords=["系統", "土壤", "地下水", "土壤地下水"],
             start_date=today,
             end_date=today,
             page_size=100
