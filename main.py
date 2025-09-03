@@ -123,17 +123,18 @@ class PCCWebScraper:
                 
                 # 1. 提取標案編號（從td的直接文字內容，排除HTML標籤）
                 編號 = ""
-                for text_node in td.contents:
-                    if hasattr(text_node, 'strip') and text_node.strip():
-                        # 這是純文字節點，包含編號
-                        編號 = text_node.strip()
-                        break
-                
-                # 2. 提取標案名稱（從span標籤）
+                td_texts = [t.strip() for t in td.stripped_strings]
+                if td_texts:
+                    編號 = td_texts[0].replace("(更正公告)", "").strip()
+
+                # 名稱要更精確地找
                 名稱 = ""
-                span_tag = td.find('span')
-                if span_tag:
-                    名稱 = span_tag.get_text(strip=True)
+                # 找 a 標籤裡的 span（標案名稱通常在連結裡）
+                a_tag = td.find('a')
+                if a_tag:
+                    span_tag = a_tag.find('span')
+                    if span_tag:
+                        名稱 = span_tag.get_text(strip=True)
                     
                 final_data = {
                     "項次": row_dict.get("項次", ""),
