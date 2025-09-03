@@ -118,15 +118,22 @@ class PCCWebScraper:
                     pk_val = a_tag['href'].split('pk=')[-1].split('&')[0]
                     href_url = f"https://web.pcc.gov.tw/tps/QueryTender/query/searchTenderDetail?pkPmsMain={pk_val}"
                 
-                # 分開案號與名稱
-                raw = row_dict.pop("標案案號&編號名稱", "")
-                if "\n" in raw:
-                   line1, line2 = raw.split("\n", 1)
-                   編號 = line1.split()[0] if line1.split() else ""
-                   名稱 = line2.strip()
-                else:
-                   編號 = ""
-                   名稱 = raw
+                # 正確的方式：直接從第3欄的HTML結構提取
+                td = cols[2]  # 第3欄包含標案編號和名稱
+                
+                # 1. 提取標案編號（從td的直接文字內容，排除HTML標籤）
+                編號 = ""
+                for text_node in td.contents:
+                    if hasattr(text_node, 'strip') and text_node.strip():
+                        # 這是純文字節點，包含編號
+                        編號 = text_node.strip()
+                        break
+                
+                # 2. 提取標案名稱（從span標籤）
+                名稱 = ""
+                span_tag = td.find('span')
+                if span_tag:
+                    名稱 = span_tag.get_text(strip=True)
                     
                 final_data = {
                     "項次": row_dict.get("項次", ""),
