@@ -118,19 +118,15 @@ class PCCWebScraper:
                     pk_val = a_tag['href'].split('pk=')[-1].split('&')[0]
                     href_url = f"https://web.pcc.gov.tw/tps/QueryTender/query/searchTenderDetail?pkPmsMain={pk_val}"
                 
-                # 處理標案名稱和編號
-                td = cols[2]
-                # 標案名稱抓 <a> 文字
-                a_tag = td.find("a")
-                名稱 = ""
-                if a_tag:
-                    span_tag = a_tag.find("span") 
-                    名稱 = span_tag.get_text(strip=True) if span_tag else a_tag.get_text(strip=True)
-
-                # 標案編號抓 <td> 內剩下的文字
-                編號_parts = [text for text in td.strings if text.strip() and text != 名稱]
-                編號 = 編號_parts[0].strip() if 編號_parts else ""
-                編號 = 編號.replace("(更正公告)", "").strip()
+                # 分開案號與名稱
+                raw = row_dict.pop("標案案號&編號名稱", "")
+                if "\n" in raw:
+                   line1, line2 = raw.split("\n", 1)
+                   編號 = line1.split()[0] if line1.split() else ""
+                   名稱 = line2.strip()
+                else:
+                   編號 = ""
+                   名稱 = raw
                     
                 final_data = {
                     "項次": row_dict.get("項次", ""),
