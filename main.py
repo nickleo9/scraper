@@ -147,8 +147,8 @@ class PCCWebScraper:
                         if hasattr(content, "name") and content.name == "span":
                             continue
                         text = str(content).strip()
-                            if text and text != "<br/>":
-                                case_id = text
+                        if text and text != "<br/>":
+                            case_id = text
                 
                     # 抓名稱：在 <span> 裡
                     span_tag = a_tag.find("span")
