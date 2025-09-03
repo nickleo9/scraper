@@ -173,7 +173,7 @@ class PCCWebScraper:
                     "關鍵字": keyword
                 }
 
-                if 名稱 and row_dict.get("機關名稱"):
+                if tender_name and row_dict.get("機關名稱"):
                     results.append(final_data)
 
             except Exception as e:
