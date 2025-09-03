@@ -122,7 +122,7 @@ class PCCWebScraper:
             
             try:
                 # 提取基本資料
-                row_data = [col.get_text().strip() for col in cols[:9]]
+                row_data = [col.get_text("\n", strip=True) for col in cols[:9]]
                 
                 # 建立基本資料字典
                 keys = ["項次", "機關名稱", "標案案號&編號名稱", "傳輸次數", "招標方式", "採購性質", "公告日期", "截止投標", "預算金額"]
@@ -141,11 +141,11 @@ class PCCWebScraper:
                 raw = row_dict.pop("標案案號&編號名稱", "")
                 if "\n" in raw:
                     line1, line2 = raw.split("\n", 1)
-                    編號 = line1.split()[0] if line1.split() else ""
+                    編號 = line1.strip().split()[0] if line1.strip().split() else ""
                     名稱 = line2.strip()
                 else:
                     編號 = ""
-                    名稱 = raw
+                    名稱 = raw.strip()
                 
                 # 組織最終結果
                 final_data = {
@@ -283,7 +283,7 @@ async def scrape_today():
         today = datetime.date.today().strftime('%Y/%m/%d')
         
         results = await scraper.scrape_multiple_keywords(
-            keywords=["系統", "平台", "建置", "維運"],
+            keywords=["環境監測", "土壤", "地下水", "土壤地下水"],
             start_date=today,
             end_date=today,
             page_size=100
