@@ -119,19 +119,15 @@ class PCCWebScraper:
                     href_url = f"https://web.pcc.gov.tw/tps/QueryTender/query/searchTenderDetail?pkPmsMain={pk_val}"
                 
                 # 分開案號與名稱
-                編號 = ""
-                名稱 = ""
-                if a_tag:
-                    # 案號在 a_tag 文字部分，名稱在 span
-                    contents = a_tag.contents
-                    for content in contents:
-                        if getattr(content, 'name', None) == 'span':
-                            名稱 = content.get_text(strip=True)
-                        elif isinstance(content, str):
-                            text = content.strip()
-                            if text:
-                                編號 = text
-
+                raw = row_dict.pop("標案案號&編號名稱", "")
+                if "\n" in raw:
+                   line1, line2 = raw.split("\n", 1)
+                   編號 = line1.split()[0] if line1.split() else ""
+                   名稱 = line2.strip()
+                else:
+                   編號 = ""
+                   名稱 = raw
+                    
                 final_data = {
                     "項次": row_dict.get("項次", ""),
                     "機關名稱": row_dict.get("機關名稱", ""),
