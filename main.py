@@ -144,8 +144,9 @@ class PCCWebScraper:
                 if a_tag:
                     # 抓案號：在 <a> 的文字節點裡，排除 <span>
                     for content in a_tag.contents:
-                        if content.name != "span":
-                            text = str(content).strip()
+                        if hasattr(content, "name") and content.name == "span":
+                            continue
+                        text = str(content).strip()
                             if text and text != "<br/>":
                                 case_id = text
                 
